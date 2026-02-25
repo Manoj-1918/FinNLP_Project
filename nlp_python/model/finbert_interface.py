@@ -1,13 +1,13 @@
 import pandas as pd
 import torch
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
-import os
 
-# Import your scraper function
-from nlp_python.scrapper.news_scrapper import scrape_company_news
+# Import master scraper
+from nlp_python.scraper.master_scraper import collect_all_news
 
-# FINBERT SETUP 
-
+# ----------------------------
+# FinBERT Model Load (once)
+# ----------------------------
 MODEL_NAME = "ProsusAI/finbert"
 
 tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
@@ -15,29 +15,61 @@ model = AutoModelForSequenceClassification.from_pretrained(MODEL_NAME)
 
 labels = ["negative", "neutral", "positive"]
 
-#  ANALYSIS FUNCTION 
+HEADLINES_FILE = "nlp_python/data/headlines.csv"
 
-def analyze_news(company_name: str):
+
+# --------------------------------------------------
+# Step 1: Run Scraper + Sentiment for a Company
+# --------------------------------------------------
+def analyze_company(company_name, symbol, sector):
     """
-    1. Scrapes company-related headlines
-    2. Runs FinBERT sentiment analysis
-    3. Returns aggregated sentiment result
+    Full pipeline:
+    1. Collect news (company + sector + announcements + Google)
+    2. Run FinBERT
     """
 
-    # Step 1: Scrape headlines dynamically
-    df = scrape_company_news(company_name)
+    print(f"Starting analysis for: {company_name} ({symbol}) - Sector: {sector}")
 
-    if df.empty or "headline" not in df.columns:
-        raise ValueError("No headlines available for sentiment analysis")
+    # Step 1: Collect news
+    total_headlines = collect_all_news(company_name, symbol, sector)
 
-    scores = {
-        "positive": 0,
-        "neutral": 0,
-        "negative": 0
-    }
+    if total_headlines == 0:
+        return {
+            "company": company_name,
+            "positive": 0,
+            "neutral": 0,
+            "negative": 0,
+            "overall_trend": "No News Found"
+        }
 
-    # Step 2: Run FinBERT
-    for text in df["headline"].dropna().head(70):
+    # Step 2: Analyze sentiment
+    return analyze_news(company_name)
+
+
+# --------------------------------------------------
+# Step 2: FinBERT Analysis
+# --------------------------------------------------
+def analyze_news(company_name):
+    try:
+        df = pd.read_csv(
+            HEADLINES_FILE,
+            encoding="utf-8",
+            on_bad_lines="skip"
+        )
+    except Exception as e:
+        return {
+            "company": company_name,
+            "error": "Headlines file not found",
+            "details": str(e)
+        }
+
+    if "headline" not in df.columns:
+        df.columns = ["headline"]
+
+    scores = {"positive": 0, "neutral": 0, "negative": 0}
+
+    # Limit to avoid heavy load
+    for text in df["headline"].dropna().head(100):
 
         inputs = tokenizer(
             text,
@@ -53,21 +85,24 @@ def analyze_news(company_name: str):
         prediction = torch.argmax(outputs.logits).item()
         scores[labels[prediction]] += 1
 
-    # Step 3: Compute overall trend
     total = sum(scores.values())
-    sentiment_score = (scores["positive"] - scores["negative"]) / max(total, 1)
 
-    if sentiment_score > 0.3:
+    # Sentiment score
+    avg_score = (scores["positive"] - scores["negative"]) / max(total, 1)
+
+    if avg_score > 0.3:
         trend = "Positive Outlook"
-    elif sentiment_score < -0.3:
+    elif avg_score < -0.3:
         trend = "Negative Outlook"
     else:
         trend = "Stable Outlook"
 
-    # Step 4: Return JSON-compatible result
     return {
+        "company": company_name,
+        "total_news": total,
         "positive": scores["positive"],
         "neutral": scores["neutral"],
         "negative": scores["negative"],
-        "overall_trend": trend
+        "overall_trend": trend,
+        "sentiment_score": round(avg_score, 2)
     }
