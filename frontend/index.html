@@ -118,7 +118,7 @@ button:hover {
 <script>
 let companies = [];
 
-// Load companies
+// Load companies from Spring backend
 window.onload = function() {
     fetch("http://localhost:8080/api/companies")
         .then(res => res.json())
@@ -137,20 +137,31 @@ function populateDropdown(list) {
     const dropdown = document.getElementById("companyDropdown");
     dropdown.innerHTML = "";
 
+    if (list.length === 0) {
+        dropdown.innerHTML = "<option>No companies found</option>";
+        return;
+    }
+
     list.forEach(c => {
         const option = document.createElement("option");
         option.value = c.symbol;
-        option.text = c.companyName + " (" + c.symbol + ")";
+
+        // IMPORTANT: Spring returns 'name', not companyName
+        option.text = c.name + " (" + c.symbol + ")";
+
         dropdown.appendChild(option);
     });
+
+    // Auto-select first result
+    dropdown.selectedIndex = 0;
 }
 
-// Search filter
+// Live search filtering
 document.getElementById("searchBox").addEventListener("input", function() {
     const keyword = this.value.toLowerCase();
 
     const filtered = companies.filter(c =>
-        c.companyName.toLowerCase().includes(keyword) ||
+        c.name.toLowerCase().includes(keyword) ||
         c.symbol.toLowerCase().includes(keyword)
     );
 
@@ -167,14 +178,15 @@ function analyze() {
     }
 
     const resultDiv = document.getElementById("result");
-    resultDiv.innerHTML = "<div class='loader'></div><p style='text-align:center'>Scraping news & analyzing...</p>";
+    resultDiv.innerHTML =
+        "<div class='loader'></div><p style='text-align:center'>Scraping news & analyzing...</p>";
 
     fetch(`http://localhost:8080/api/sentiment?symbol=${symbol}`)
-        .then(res => res.text())
+        .then(res => res.json())
         .then(data => {
             resultDiv.innerHTML = `
                 <h3>Result for ${symbol}</h3>
-                <pre style="white-space: pre-wrap;">${data}</pre>
+                <pre style="white-space: pre-wrap;">${JSON.stringify(data, null, 2)}</pre>
             `;
         })
         .catch(err => {
