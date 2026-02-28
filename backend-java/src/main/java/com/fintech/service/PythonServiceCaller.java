@@ -8,7 +8,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 @Service
 public class PythonServiceCaller {
 
-    private final String PYTHON_URL = "http://localhost:5000/sentiment";
+    private final String PYTHON_URL = "http://python-service:5000/sentiment";
 
     public String callPythonService(Company company) {
 
