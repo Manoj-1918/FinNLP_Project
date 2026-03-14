@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify
-from nlp_python.model.finbert_interface import analyze_company
+from nlp_python.model.finbert_interface import analyze_company,generate_comparison_insight
 
 app = Flask(__name__)
 
@@ -40,7 +40,7 @@ def sentiment():
             "details": str(e)
         }), 500
 
-@app.route("/compare", methods=["GET"])
+@app.route("/compare")
 def compare():
 
     company1 = request.args.get("company1")
@@ -51,25 +51,16 @@ def compare():
     symbol2 = request.args.get("symbol2")
     sector2 = request.args.get("sector2")
 
-    if not all([company1, symbol1, sector1, company2, symbol2, sector2]):
-        return jsonify({
-            "error": "Missing parameters"
-        }), 400
+    result1 = analyze_company(company1, symbol1, sector1)
+    result2 = analyze_company(company2, symbol2, sector2)
 
-    try:
-        result1 = analyze_company(company1, symbol1, sector1)
-        result2 = analyze_company(company2, symbol2, sector2)
+    insight = generate_comparison_insight(result1, result2)
 
-        return jsonify({
-            "company1": result1,
-            "company2": result2
-        })
-
-    except Exception as e:
-        return jsonify({
-            "error": "Comparison failed",
-            "details": str(e)
-        }), 500
+    return jsonify({
+        "company1": result1,
+        "company2": result2,
+        "ai_insight": insight
+    })
 
 # -------------------------------
 # Run Server

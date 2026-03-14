@@ -79,6 +79,23 @@ border-radius:12px;
 text-align:center;
 }
 
+.ai-insight{
+margin-top:25px;
+padding:18px;
+border-radius:12px;
+background:rgba(59,130,246,0.15);
+border:1px solid rgba(59,130,246,0.4);
+font-size:15px;
+line-height:1.6;
+}
+
+.ai-insight-title{
+font-weight:bold;
+font-size:16px;
+margin-bottom:8px;
+color:#60a5fa;
+}
+
 .circle{
 width:130px;
 height:130px;
@@ -211,6 +228,10 @@ function showResult(s1,s2,data){
 
 let c1=data.company1
 let c2=data.company2
+let insight=data.ai_insight
+
+let score1=Math.round((c1.sentiment_score+1)*50)
+let score2=Math.round((c2.sentiment_score+1)*50)
 
 document.getElementById("result").innerHTML=
 
@@ -221,7 +242,7 @@ document.getElementById("result").innerHTML=
 <h3>${s1}</h3>
 
 <div class="circle" id="c1">
-<div class="score">${Math.round((c1.sentiment_score+1)*50)}%</div>
+<div class="score">${score1}%</div>
 </div>
 
 <div class="stats">
@@ -238,7 +259,7 @@ document.getElementById("result").innerHTML=
 <h3>${s2}</h3>
 
 <div class="circle" id="c2">
-<div class="score">${Math.round((c2.sentiment_score+1)*50)}%</div>
+<div class="score">${score2}%</div>
 </div>
 
 <div class="stats">
@@ -249,7 +270,23 @@ document.getElementById("result").innerHTML=
 
 </div>
 
+<div class="ai-insight">
+<div class="ai-insight-title">AI Comparative Insight</div>
+${insight}
+</div>
+
 `
+
+/* Animate circular charts */
+
+let circle1=document.getElementById("c1")
+let circle2=document.getElementById("c2")
+
+circle1.style.background=
+`conic-gradient(#22c55e ${score1*3.6}deg,#334155 0deg)`
+
+circle2.style.background=
+`conic-gradient(#22c55e ${score2*3.6}deg,#334155 0deg)`
 
 }
 
