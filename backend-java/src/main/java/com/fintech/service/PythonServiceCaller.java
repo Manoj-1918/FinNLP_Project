@@ -8,7 +8,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 @Service
 public class PythonServiceCaller {
 
-    private final String PYTHON_URL = "http://python-service:5000/sentiment";
+    private final String PYTHON_URL = "http://localhost:5000/sentiment";
 
     public String callPythonService(Company company) {
 
@@ -23,4 +23,20 @@ public class PythonServiceCaller {
 
         return restTemplate.getForObject(url, String.class);
     }
+public String compareCompanies(Company c1, Company c2) {
+
+    RestTemplate restTemplate = new RestTemplate();
+
+    String url = UriComponentsBuilder
+            .fromUriString("http://localhost:5000/compare")
+            .queryParam("company1", c1.getName())
+            .queryParam("symbol1", c1.getSymbol())
+            .queryParam("sector1", c1.getSector())
+            .queryParam("company2", c2.getName())
+            .queryParam("symbol2", c2.getSymbol())
+            .queryParam("sector2", c2.getSector())
+            .toUriString();
+
+    return restTemplate.getForObject(url, String.class);
+}
 }

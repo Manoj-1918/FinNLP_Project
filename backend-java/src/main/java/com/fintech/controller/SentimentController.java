@@ -18,6 +18,24 @@ public class SentimentController {
     @Autowired
     private PythonServiceCaller pythonServiceCaller;
 
+@GetMapping("/compare")
+public ResponseEntity<?> compare(
+        @RequestParam String symbol1,
+        @RequestParam String symbol2) {
+
+    Company c1 = companyService.getCompany(symbol1);
+    Company c2 = companyService.getCompany(symbol2);
+
+    if (c1 == null || c2 == null) {
+        return ResponseEntity.badRequest()
+                .body("Invalid company symbol provided.");
+    }
+
+    String result = pythonServiceCaller.compareCompanies(c1, c2);
+
+    return ResponseEntity.ok(result);
+}
+
     @GetMapping("/sentiment")
     public ResponseEntity<?> analyze(@RequestParam String symbol) {
 
