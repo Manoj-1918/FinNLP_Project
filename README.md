@@ -44,7 +44,7 @@ Frontend (JS/Fetch) ↔ Spring Boot (REST) ↔ Python Flask (NLP/Scraper) ↔ Fi
 ### **1\. Clone the Repository**
 
 Bash  
-git clone https://github.com/\<your-username\>/FinNLP.git  
+git clone https://github.com/manoj-1918/FinNLP.git  
 cd FinNLP
 
 ### **2\. Python AI Service Setup**
@@ -110,7 +110,7 @@ JSON
 
 ## **👨‍💻 Author**
 
-**Manoj Godh**
+**Manoj Sah Godh**
 
 *AI / ML & Software Development Enthusiast*
 
